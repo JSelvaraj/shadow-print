@@ -15,6 +15,7 @@
 int count = 0;
 int main(int argc, char *argv[])
 {
+  
   int id = -1;
   int fd[2];
   int v = 0;
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
     if (id >= 0) {
       // write(fd[1], str, sizeof(argv));
     }
-    
+
     id = fork();
     if (id != 0) { //parent
       close(fd[1]);
