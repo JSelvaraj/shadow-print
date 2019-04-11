@@ -7,4 +7,4 @@
 #include <string.h>
 #include <fcntl.h>
 
-char* stringswap(char* string);
+void stringswap(char* string, int string_length);
