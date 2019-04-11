@@ -23,9 +23,10 @@ int main(int argc, char *argv[])
   pipe(fd);
   while (count < 10 && child_id != 0) {
     if (count != 0) {
+
       read(fd[1], str, sizeof(str));
       parent_id = child_id;
-      printf("%s\n",str );
+      printf("pid: %d  received string: %s\n", getpid(), str );
     } else {
       parent_id = getpid();
     }
@@ -51,7 +52,7 @@ void stringswap(char* string, int string_length){
     index1 = rand() % string_length;
     index2 = rand() % string_length;
   } while (index1 == index2);
-  printf("  index 1: %d   index 2: %d\n", index1, index2);
+  printf("  Swapped indices: %d, %d\n", index1, index2);
   char temp;
   temp = string[index1];
   string[index1] = string[index2];
