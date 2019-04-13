@@ -22,27 +22,31 @@ int main(int argc, char *argv[])
   char string[length];
   strcpy(string, str);
   pipe(fd);
-  while (count < 10 && !child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes. !child_id same as child_id == 0
+  while (count < 11 && !child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes. !child_id same as child_id == 0
     if (count != 0) {
-      read(fd[0], str, sizeof(str));
+      // close(fd[1]);
+      read(fd[0], str, length);
+
+      strcpy(string, str);
       parent_id = getpid();
-      printf("pid: %d  received string: %s\n", getpid(), str );
+      printf("pid: %d  received string: %s count: %d\n", getpid(), string, count);
     }
     child_id = fork();
     if (child_id != 0) { //parent
+      // close(fd[0]);
       srand(time(NULL) + count); // seeds the rand() function
-      stringswap(str, length);
-      // printf("modified str: %s\n", str);
-      write(fd[1], str, sizeof(str));
+      str = stringswap(string, length);
+      // printf("modified string 2: %s\n", str );
+      write(fd[1], str, length);
     } else { //child
       printf("New Process: %d   Parent: %d\n", getpid() , parent_id);
     }
     count++;
   }
   if(count == 1) { // formatting so the terminal directory doesn't intersect stdout
-    sleep(1);
-  }
-  return 0;
+  sleep(1);
+}
+return 0;
 }
 
 /**
@@ -52,7 +56,7 @@ This function takes in a string and swaps two random characters.
 @Param string_length the length of the string argument.
 */
 
-void stringswap(char string[], int string_length){
+char* stringswap(char string[], int string_length){
   int index1, index2;
   do  {
     index1 = rand() % (string_length - 1);
@@ -62,5 +66,10 @@ void stringswap(char string[], int string_length){
   char temp;
   temp = string[index1];
   string[index1] = string[index2];
+  // printf("index: %c\n",string[index2]);
+  // printf("temp: %c\n", temp);
   string[index2] = temp;
+  // printf("index2: %c\n",string[index2]);
+  // printf("modified string: %s\n", string );
+  return string;
 }
