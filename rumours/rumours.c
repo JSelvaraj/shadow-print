@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   char string[length];
   strcpy(string, str);
   pipe(fd);
-  while (count < 10 && !child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes.
+  while (count < 10 && !child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes. !child_id same as child_id == 0
     if (count != 0) {
       read(fd[0], str, sizeof(str));
       parent_id = getpid();
@@ -55,8 +55,8 @@ This function takes in a string and swaps two random characters.
 void stringswap(char string[], int string_length){
   int index1, index2;
   do  {
-    index1 = rand() % string_length;
-    index2 = rand() % string_length;
+    index1 = rand() % (string_length - 1);
+    index2 = rand() % (string_length - 1);
   } while (index1 == index2);
   printf("pid: %d Swapped indices: %d, %d\n",getpid(), index1, index2);
   char temp;
