@@ -14,7 +14,7 @@ void* worker(void *data){
 }
 int main(){
   pthread_t thread = (pthread_t)NULL; //1st argument stores id of the thread created, 3rd argument is function being made into new thread
-  printf("Main thread id: %d\n", thread );
+  printf("Main thread id: %d\n", pthread_self() );
   for(int i = 0; i < 5; ++i){
     pthread_create(&thread, NULL, worker, (void*)thread);
     printf("Thread (%d) id: %d\n", i, thread );
