@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
   char* str;
   // printf("%s\n", string );
   for(int i = 1; i <= argc - 1; i++) { //combines the command line arguments into a single string
-    str = realloc(str, strlen(argv[i]));
+    str = realloc(str, length);
     strcat(str, argv[i]);
     strcat(str, " ");
   }
@@ -22,22 +22,10 @@ int main(int argc, char *argv[])
   char string[length];
   strcpy(string, str);
   pipe(fd);
-<<<<<<< HEAD
-  while (count < 10 && id != 0) {
-    if (id >= 0) {
-      // write(fd[1], str, sizeof(argv));
-    }
-
-    id = fork();
-    if (id != 0) { //parent
-      close(fd[1]);
-      open(fd[0]);
-=======
   while (count < 11 && !child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes. !child_id same as child_id == 0
     if (count != 0) {
       // close(fd[1]);
       read(fd[0], str, length);
->>>>>>> 5e78f1cfc0914b36679fb4ca466a50e1edbefe6b
 
       strcpy(string, str);
       parent_id = getpid();
