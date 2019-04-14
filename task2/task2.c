@@ -9,7 +9,7 @@ void* worker(void *data){
   if(data) {
     pthread_join((pthread_t)data, NULL);
   }
-  printf("thread_id being waited on: %d current thread_id: %d\n", (int) data, pthread_self());
+  printf("thread_id that was waited on: %d current thread_id: %d\n", (int) data, pthread_self());
   return NULL;
 }
 int main(){
@@ -19,5 +19,5 @@ int main(){
     printf("Thread (%d) id: %d\n", i, thread );
   }
   pthread_join(thread, NULL);
-  printf("thread_id being waited on: %d current thread_id: %d\n",  (int) thread, pthread_self());
+  printf("thread_id that was waited on: %d current thread_id: %d\n",  (int) thread, pthread_self());
 }
