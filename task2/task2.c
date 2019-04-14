@@ -8,8 +8,8 @@ void* worker(void *data){
   sleep(1);
   if(data) {
     pthread_join((pthread_t)data, NULL);
+    printf("thread_id that was waited on: %d current thread_id: %d\n", (int) data, pthread_self());
   }
-  printf("thread_id that was waited on: %d current thread_id: %d\n", (int) data, pthread_self());
   return NULL;
 }
 int main(){
