@@ -1,110 +1,131 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <pthread.h>
+#include <crypt.h>
 #include "shadow_breaker.h"
 #include "utils.h"
 #include "output_helpers.h"
 #include "queue_r.h"
 
-/******* OPTIONAL TEMPLATE CODE STARTS HERE -- MODIFY OR DELETE *******/
-
-/**
- * You may wish to define a struct for your task here.
- *  Remember that enqueue/dequeue funcs take and return (void *)!
- *
- * [Advanced] Separately, you may wish to define a de-structor function for
- *  use by queue_destroy() in "queue.h" -- see that header for details.
- */
-
 typedef struct {
-  char a[22];
-  char *b;
-} myX;
-
-void myX_destroy(void *data)
-{
-  myX *x = (myX *) data;
-  // We don't free(x->a) since a[22] was never mallec'ed.
-  free(x->b);
-  free(x);
-}
-/******* OPTIONAL POSSIBLE TEMPLATE CODE __ENDS__ HERE *******/
-
-
-
-/**
- * REQUIRED FUNCTION - This is the start of your threads.
- */
-void thread_start_routine(void *data)
-{
-  // TODO thread execution starts with this function
-  return 0;
-}
-typedef struct thing {
   int thread_num;
+  char* username;
   char* hash;
   char* partial_password;
+  size_t thread_count;
 } thread_in;
 
+typedef struct returnObject {
+  int hashCount;
+  int result;
+  char* password;
+
+} results;
+
+int done_flag = 0;
 /**
- * REQUIRED FUNCTION - Called by main to launch and manage threads.
- */
+* REQUIRED FUNCTION - This is the start of your threads.
+*/
+void* thread_start_routine(void *data)
+{
+  struct crypt_data cdata;
+  cdata.initialized = 0;
+
+
+  thread_in *input = (thread_in *)data;
+  char partial_password[9];
+  strcpy(partial_password, input->partial_password);
+  int prefix_len = getPrefixLength(input->partial_password);
+  int unknown_letter_count = strlen(input->partial_password) - prefix_len;
+
+  char* unknowns = &partial_password[prefix_len];
+
+
+  long start_index, count;
+  getSubrange(unknown_letter_count, input->thread_count, input->thread_num, &start_index, &count);
+  setStringPosition(unknowns, start_index);
+  int hashCount = 0;
+  print_thread_parr_start(input->thread_num, input->username, start_index, partial_password);
+  const char* hashed;
+  hashed = crypt_r(partial_password,"cs2002", &cdata);
+  hashCount++;
+  while (strcmp(input->hash, hashed) && count) {
+    if (done_flag) break; // checks if other threads have found the password
+    incrementString(unknowns);
+    hashed = crypt_r(partial_password,"cs2002", &cdata);
+    hashCount++;
+    count--;
+  }
+
+  results *returnObject = malloc(sizeof(results));
+  returnObject -> hashCount = hashCount;
+  if (!strcmp(input->hash, hashed)) {
+    print_thread_parr_result(input->thread_num, hashCount, 0);
+    done_flag = 1;
+    returnObject->result = 0;
+    returnObject->password = malloc(9);
+    strcpy(returnObject->password, partial_password);
+  } else if (!count) {
+    print_thread_parr_result(input->thread_num, hashCount, 2);
+    returnObject->result = 1;
+  } else {
+    print_thread_parr_result(input->thread_num, hashCount, 1);
+    returnObject->result = 1;
+  }
+  free(input);
+  return (void *) returnObject;
+}
+
+
+/**
+* REQUIRED FUNCTION - Called by main to launch and manage threads.
+*/
 int start(size_t thread_count) {
+  double start_time = getTime();
+  double start_cpu_time = getCPUTime();
 
-  // TODO your code here, make sure to use thread_count!
-  // Remember, this is only the thread launching point, i.e. this function:
-  //   - calls pthread_create(..., ..., &thread_start_routine, ...)
-  //   - reads tasks (one per line) from stdin, etc.
-  //   - example queue code is 'just in case' anyone wishes to handle
-  //     multiple passwords.
-
-
-  char* username = NULL;
-  scanf("%s", &username);
-  char* hash = NULL;
-  scanf("%s", &hash);
-  char* partial_password = NULL;
-  scanf("%s", &partial_password);
+  char* username = malloc(9);
+  scanf("%s ", username);
+  // printf("%s\n", username);
+  char* hash = malloc(14);
+  scanf("%s", hash);
+  // printf("hash: %s\n", hash);
+  char* partial_password = malloc(9);
+  scanf("%s", partial_password);
+  // printf("%c\n", partial_password[3] );
   print_parr_start_user(username);
   pthread_t thr[thread_count];
-  for (int i = 0; i < thread_count; i++) {
+  for (int i = 1; i <= thread_count; i++) {
     thread_in *data = malloc(sizeof(thread_in));
+    data->username = username;
     data->thread_num = i;
     data->hash = hash;
     data->partial_password = partial_password;
-    pthread_create(&thr[i], NULL, thread_start_routine, (void *) data);
+    data->thread_count = thread_count;
+    pthread_create(&thr[i-1], NULL, thread_start_routine, (void *)data); // stored in thr[i-1 because for loop begins at 1 but array begins at 0]
   }
-
-
-
-
-  // All code below is for demonstrative use of queue only.
-  queue *q = queue_create(-1);
-
-  myX *data;
-
-  for(int i = 0; i < 1000; ++i) {
-    data = malloc(sizeof(myX));
-
-    // Contents may or may not need to be handled in myX_destroy()
-    (void)strncpy(data->a, "Hello ", sizeof(data->a));
-    data->b = strdup("World! "); // strdup mallocs
-    fprintf(stderr, "%d ", i);
-
-    enqueue(q, (void *)data);
+  int hashCount = 0;
+  void *temp = NULL;
+  char* password = malloc(9);
+  int result = 1;
+  for (int i = 0; i < thread_count; i++) {
+    pthread_join(thr[i], &temp);
+    hashCount += ((results *)temp)->hashCount;
+    if (((results *)temp)->result == 0) {
+      strcpy(password, ((results *) temp)->password);
+      free(((results *) temp)->password);
+      result = 0;
+    }
+    free(temp);
   }
-
-  data = NULL;
-
-  for(int i = 500; i > 0; --i) {
-    data = (myX *) dequeue(q);
-    if(!data) perror("__Impossible__ since dequeue() blocks when empty!\n");
-    fprintf(stderr, "%d - %s%s\n", i, data->a, data->b);
-  }
-
-  // Here, still 500 nodes remain in the queue.
-  //  myX_destroy will be called to free individual nodes in the queue.
-  queue_destroy(q, &myX_destroy);
-  q = NULL;
-
+  double elapsed = getTime() - start_time;
+  double total_cpu_time = getCPUTime() - start_cpu_time;
+  print_parr_summary(username, password, hashCount, elapsed, total_cpu_time, result);
+  free(username);
+  free(hash);
+  free(partial_password);
+  free(password);
   return 0; // 0 indicates success
 }
