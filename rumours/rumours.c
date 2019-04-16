@@ -6,6 +6,8 @@
 */
 #include "rumours.h"
 
+#define NUM_OF_PROCESSES 10
+
 int count = 0;
 int main(int argc, char *argv[])
 {
@@ -22,16 +24,20 @@ int main(int argc, char *argv[])
   char string[length];
   strcpy(string, str);
   pipe(fd);
-  while (count < 11 && !child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes. !child_id same as child_id == 0
+  while (!child_id) { //controls the number of children made and ensures when a child becomes a parent the process closes. !child_id same as child_id == 0
     if (count != 0) {
       // close(fd[1]);
       read(fd[0], str, length);
 
       strcpy(string, str);
       parent_id = getpid();
-      printf("pid: %d  received string: %s count: %d\n", getpid(), string, count);
+      printf("pid: %d  received string: %s loop number: %d\n", getpid(), string, count);
     }
-    child_id = fork();
+    
+    count++;
+    if (count < NUM_OF_PROCESSES + 1) child_id = fork();
+    else break;
+
     if (child_id != 0) { //parent
       // close(fd[0]);
       srand(time(NULL) + count); // seeds the rand() function
@@ -41,11 +47,11 @@ int main(int argc, char *argv[])
     } else { //child
       printf("New Process: %d   Parent: %d\n", getpid() , parent_id);
     }
-    count++;
+
   }
-  if(count != 11) { // formatting so the terminal directory doesn't intersect stdout
-    wait(child_id);
-  }
+  if(count != NUM_OF_PROCESSES + 1) { // formatting so the terminal directory doesn't intersect stdout
+  wait(child_id);
+}
 
 return 0;
 }
