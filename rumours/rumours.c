@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
   char* str;
   // printf("%s\n", string );
   for(int i = 1; i <= argc - 1; i++) { //combines the command line arguments into a single string
-    str = realloc(str, length);
+    str = realloc(str, strlen(argv[i]));
     strcat(str, argv[i]);
     strcat(str, " ");
   }
@@ -43,9 +43,10 @@ int main(int argc, char *argv[])
     }
     count++;
   }
-  if(count == 1) { // formatting so the terminal directory doesn't intersect stdout
-  sleep(1);
-}
+  if(count != 11) { // formatting so the terminal directory doesn't intersect stdout
+    wait(child_id);
+  }
+
 return 0;
 }
 
